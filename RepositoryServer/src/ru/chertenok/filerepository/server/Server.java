@@ -1,5 +1,7 @@
 package ru.chertenok.filerepository.server;
 
+import java.sql.SQLException;
+
 public class Server {
     private BDHandler bdHandler;
 
@@ -7,13 +9,25 @@ public class Server {
     }
 
     public void run(){
-        BDHandler.init(ConfigServer.CONNECT_TO_BD_STRING, ConfigServer.PATH_TO_BD);
+        try {
+            BDHandler.init(ConfigServer.CONNECT_TO_BD_STRING, ConfigServer.PATH_TO_BD);
+            BDHandler.registerUser("hghjrgrg'l;l;rgrgh","khjrgr'grkhk");
+            BDHandler.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
 
 
     }
 
     public void stop(){
-        BDHandler.close();
+        try {
+            BDHandler.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
     //private Vector<ClientHandler> clients;
 
