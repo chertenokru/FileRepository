@@ -1,4 +1,4 @@
-package ru.chertenok.filerepository.client.server;
+package ru.chertenok.filerepository.server;
 
 public class Server {
     private BDHandler bdHandler;
@@ -7,7 +7,7 @@ public class Server {
     }
 
     public void run(){
-        BDHandler.init(Config.CONNECT_TO_BD_STRING,Config.PATH_TO_BD);
+        BDHandler.init(ConfigServer.CONNECT_TO_BD_STRING, ConfigServer.PATH_TO_BD);
 
 
     }

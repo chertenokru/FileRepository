@@ -4,7 +4,7 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public class Util {
+public class Utils {
 
     public  enum HashCode {
             MD5("MD5"), SH1("SHA-1"), SH256("SHA-256"),SHA512("SHA-512"),RipeMD("RipeMD") ;

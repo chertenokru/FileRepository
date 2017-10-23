@@ -1,4 +1,4 @@
-package ru.chertenok.filerepository.client.server;
+package ru.chertenok.filerepository.server;
 
 public class Main {
 

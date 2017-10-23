@@ -1,4 +1,4 @@
-package ru.chertenok.filerepository.client.server;
+package ru.chertenok.filerepository.server;
 
 import org.sqlite.SQLiteConfig;
 import org.sqlite.javax.SQLiteConnectionPoolDataSource;
@@ -18,20 +18,7 @@ public class BDHandler {
 
     public static void init( String connectionStr, String nameBD) {
 
-//        try {
-//            Class.forName(bdDriverName);
-//        } catch (ClassNotFoundException e) {
-//            log.log(Level.SEVERE,"Ошибка подключения драйвера БД: "+e);
-//        }
-//
       BDHandler.connectionStr = connectionStr;
-
-      sqlConfig = new SQLiteConfig();
-      sqlConfig.enforceForeignKeys(true);
-      sqlConfig.enableLoadExtension(true);
-      datesoure = new SQLiteConnectionPoolDataSource(sqlConfig);
-      datesoure.setUrl(String.format(connectionStr,nameBD));
-
 
             //connection = DriverManager.getConnection("jdbc:sqlite:chat.db");
             // stmt = connection.createStatement();
@@ -44,5 +31,24 @@ public class BDHandler {
     public static void close() {
 
     }
+
+
+    public static void registerUser(String userName,String userPassword) throws Exception
+    {
+
+    }
+
+    public static void loginUser(String userName,String userPassword) throws Exception
+    {
+
+    }
+
+    public static void addUserFile(String userName,String serverFileName,String clientFileName)
+    {
+
+    }
+
+
+
 
 }

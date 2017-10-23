@@ -1,8 +1,8 @@
-package ru.chertenok.filerepository.client.server;
+package ru.chertenok.filerepository.server;
 
 import java.sql.DriverManager;
 
-public class Config {
+public class ConfigServer {
     public static final int PORT_NUM = 8189;
     public static final String PATH_TO_BD = "repository.db";
     public static final String BD_DRIVER_NAME ="org.sqlite.JDBC";
@@ -10,7 +10,6 @@ public class Config {
 
 
 
-
-    private Config() {
+    private ConfigServer() {
     }
 }
