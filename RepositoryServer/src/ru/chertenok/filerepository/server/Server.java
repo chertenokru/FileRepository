@@ -5,6 +5,8 @@ import ru.chertenok.filerepository.common.ConfigCommon;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -13,6 +15,7 @@ public class Server {
     private ServerSocket server;
     private Logger log = Logger.getGlobal();
     private boolean isStop;
+    private List<ServerConnection> listClients = new ArrayList<ServerConnection>();
 
     public Server() {
     }
@@ -51,6 +54,7 @@ public class Server {
             while (!isStop)
             {
                 log.log(Level.INFO,"Server wait connections... ");
+
                 new ServerConnection(server.accept()).start();
             }
 

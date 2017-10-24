@@ -1,7 +1,7 @@
 package ru.chertenok.filerepository.client;
 
 import ru.chertenok.filerepository.common.ConfigCommon;
-import ru.chertenok.filerepository.common.DateRequest;
+import ru.chertenok.filerepository.common.Message;
 import ru.chertenok.filerepository.common.MyCalculation;
 
 import java.io.IOException;
@@ -20,7 +20,7 @@ public class Client {
             ObjectInputStream in = new ObjectInputStream(server.getInputStream());
             System.out.println("пишем дата реквест");
 
-            out.writeObject(new DateRequest());
+            out.writeObject(new Message());
             out.flush();
             System.out.println("читаем ответ");
             System.out.println(in.readObject());
