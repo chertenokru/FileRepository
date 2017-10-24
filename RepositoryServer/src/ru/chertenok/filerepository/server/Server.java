@@ -1,95 +1,100 @@
 package ru.chertenok.filerepository.server;
 
-import ru.chertenok.filerepository.common.ConfigCommon;
+import ru.chertenok.filerepository.common.config.ConfigCommon;
+import ru.chertenok.filerepository.server.bd.BDHandler;
+import ru.chertenok.filerepository.server.config.ConfigServer;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Server {
-    private BDHandler bdHandler;
-    private ServerSocket server;
     private Logger log = Logger.getGlobal();
+    private ServerSocket server;
     private boolean isStop;
-    private List<ServerConnection> listClients = new ArrayList<ServerConnection>();
+    private List<ClientConnection> listClients = new Vector<ClientConnection>();
 
     public Server() {
     }
 
-    public void run(){
+    public void run() {
         try {
+            log.log(Level.INFO, "starting...");
+            log.log(Level.INFO, "connect to bd...");
             BDHandler.init(ConfigServer.CONNECT_TO_BD_STRING, ConfigServer.PATH_TO_BD);
-         //   BDHandler.registerUser("hghjrgrg'l;l;rgrgh","khjrgr'grkhk");
-            start();
-
+            startSocket();
 
         } catch (SQLException e) {
             e.printStackTrace();
-            log.log(Level.SEVERE,e.toString());
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
-            log.log(Level.SEVERE,e.toString());
-        } finally
-        {
-            try {
-                BDHandler.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-                log.log(Level.SEVERE,e.toString());
-            }
         }
-
-
     }
 
-    private void start(){
+    private void startSocket() {
         try {
-            log.log(Level.INFO,"Server starting... ");
+            log.log(Level.INFO, "Socket starting... ");
             server = new ServerSocket(ConfigCommon.getServerPort());
-            log.log(Level.INFO,"Server started on port "+ConfigCommon.getServerPort());
-            while (!isStop)
-            {
-                log.log(Level.INFO,"Server wait connections... ");
+            log.log(Level.INFO, "Server started on port " + ConfigCommon.getServerPort());
+            Socket client;
+            ClientConnection clientConnection;
 
-                new ServerConnection(server.accept()).start();
+            while (!isStop) {
+                log.log(Level.INFO, "Server wait connections... ");
+                client = server.accept();
+                clientConnection = new ClientConnection(client);
+                addClient(clientConnection);
             }
 
         } catch (IOException e) {
-            log.log(Level.SEVERE,e.toString());
+            log.log(Level.SEVERE, e.toString());
             e.printStackTrace();
-        }
-        finally{
+        } finally {
+            stop();
             try {
-                stop();
                 server.close();
             } catch (IOException e) {
-                log.log(Level.SEVERE,"Error closing ServerSocket : "+e.toString());
+                log.log(Level.SEVERE, "Error closing ServerSocket : " + e.toString());
                 e.printStackTrace();
             }
 
         }
     }
 
-    public void stopServer(){
+    private void addClient(ClientConnection clientConnection) {
+        listClients.add(clientConnection);
+        clientConnection.setServer(this);
+        clientConnection.start();
+    }
+
+    public void removeClient(ClientConnection client) {
+        listClients.remove(client);
+    }
+
+    public void stopServer() {
         isStop = true;
     }
 
 
-    private void stop(){
-        try {
-            // todo: закрытие клиентов
+    private void stop() {
+        for (int i = listClients.size(); i <= 0; i--) {
+            log.log(Level.INFO, "stoping client " + listClients.get(i).toString());
+            listClients.get(i).stopServer();
+            listClients.remove(i);
+        }
 
+        try {
+            log.log(Level.INFO, "stoping bd...");
             BDHandler.close();
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.log(Level.SEVERE, "error closing bd :" + e);
         }
     }
-    //private Vector<ClientHandler> clients;
-
 
 
 }

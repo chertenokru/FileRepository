@@ -1,4 +1,4 @@
-package ru.chertenok.filerepository.common;
+package ru.chertenok.filerepository.common.config;
 
 public class ConfigCommon {
     private static final String SERVER_URL = "localhost";

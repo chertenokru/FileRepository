@@ -1,43 +1,91 @@
 package ru.chertenok.filerepository.client;
 
-import ru.chertenok.filerepository.common.ConfigCommon;
-import ru.chertenok.filerepository.common.Message;
-import ru.chertenok.filerepository.common.MyCalculation;
+import ru.chertenok.filerepository.common.Utils;
+import ru.chertenok.filerepository.common.config.ConfigCommon;
+import ru.chertenok.filerepository.common.messages.Message;
+import ru.chertenok.filerepository.common.messages.MessageLogin;
+import ru.chertenok.filerepository.common.messages.MessageResult;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import static ru.chertenok.filerepository.common.Utils.readMessage;
+import static ru.chertenok.filerepository.common.Utils.sendMessage;
 
 public class Client {
+    private Logger log = Logger.getGlobal();
+    private Socket server;
+    private ObjectInputStream in;
+    private ObjectOutputStream out;
+    private boolean isLoggIn;
+    private boolean isConnected;
 
     public Client() {
+        connect();
+    }
+
+    public boolean isLoggIn() {
+        return isLoggIn;
+    }
+
+    public boolean isConnected() {
+        return isConnected;
+    }
+
+    public boolean connect() {
+        if (isConnected) return isConnected;
         try {
-            Socket server = new Socket(ConfigCommon.getServerUrl(), ConfigCommon.getServerPort());
-            System.out.println("connected to server");
-            ObjectOutputStream out = new ObjectOutputStream(server.getOutputStream());
-
-            ObjectInputStream in = new ObjectInputStream(server.getInputStream());
-            System.out.println("пишем дата реквест");
-
-            out.writeObject(new Message());
-            out.flush();
-            System.out.println("читаем ответ");
-            System.out.println(in.readObject());
-            System.out.println("пишем  калькулятион");
-            out.writeObject(new MyCalculation(2));
-            out.flush();
-            System.out.println("ждем ответ");
-            System.out.println(in.readObject());
-            System.out.println("закрываем соединение");
-            server.close();
-
-
+            log.log(Level.INFO, "connect to socket server...");
+            server = new Socket(ConfigCommon.getServerUrl(), ConfigCommon.getServerPort());
+            log.log(Level.INFO, "connected to server " + ConfigCommon.getServerUrl() + ":" + ConfigCommon.getServerPort());
+            out = new ObjectOutputStream(server.getOutputStream());
+            in = new ObjectInputStream(server.getInputStream());
+            isConnected = true;
         } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            log.log(Level.SEVERE, "socket is not connected ("+ ConfigCommon.getServerUrl() + ":" + ConfigCommon.getServerPort()+"): " + e);
+            isConnected = false;
+        }
+        return isConnected;
+    }
+
+    public void disconnect() {
+        if (!isConnected) {
+            log.log(Level.INFO, "not connected");
+            return;
+        }
+        try {
+            server.close();
+            log.log(Level.INFO, "socket closed");
+        } catch (IOException e1) {
+
+            e1.printStackTrace();
         }
     }
+
+    public String register(String login,String password)
+    {
+        if (!isConnected) return "not connected";
+
+        sendMessage(new MessageLogin(login,password,true),out);
+        Message m = readMessage(in);
+        if (m instanceof MessageResult)
+        {
+            MessageResult mr = (MessageResult)m;
+            if (mr.success){
+                isLoggIn = true;
+                return mr.message;
+            } else
+            {
+                return mr.message;
+            }
+        }  else
+            return "server not return resalt";
+    }
+
+
 
 }

@@ -1,7 +1,4 @@
-package ru.chertenok.filerepository.server;
-
-import org.sqlite.SQLiteConfig;
-import org.sqlite.javax.SQLiteConnectionPoolDataSource;
+package ru.chertenok.filerepository.server.bd;
 
 import java.sql.*;
 import java.util.logging.Logger;

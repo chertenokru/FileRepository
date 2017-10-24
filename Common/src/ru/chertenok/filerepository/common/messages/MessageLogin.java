@@ -1,4 +1,4 @@
-package ru.chertenok.filerepository.common;
+package ru.chertenok.filerepository.common.messages;
 
 public class MessageLogin extends Message {
     public final String userLogin;

@@ -1,4 +1,4 @@
-package ru.chertenok.filerepository.common;
+package ru.chertenok.filerepository.common.messages;
 
 public class MessageResult extends Message{
     public final boolean success;

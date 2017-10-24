@@ -1,4 +1,4 @@
-package ru.chertenok.filerepository.common;
+package ru.chertenok.filerepository.common.messages;
 
 import java.io.Serializable;
 
