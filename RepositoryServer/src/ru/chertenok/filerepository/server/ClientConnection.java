@@ -66,7 +66,7 @@ public class ClientConnection extends Thread {
                 BDHandler.registerUser(m.userLogin, m.userPassword);
                 sendMessage(new MessageResult(true, "user registred"), out);
             } catch (SQLException e) {
-                log.log(Level.SEVERE, "sql error user registration");
+                log.log(Level.SEVERE, "sql error user registration: "+e);
                 sendMessage(new MessageResult(false, "internal error"), out);
             }
 

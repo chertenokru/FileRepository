@@ -14,13 +14,15 @@ public class Utils {
 
 
 
-    public static void sendMessage( Message message,ObjectOutputStream out)  {
+    public static boolean sendMessage( Message message,ObjectOutputStream out)  {
         log.log(Level.INFO, "send " + message.getClass().getSimpleName());
         try {
             out.writeObject(message);
             out.flush();
+            return true;
         } catch (IOException e) {
             log.log(Level.SEVERE,"error sending messages: "+e);
+            return false;
         }
 
     }

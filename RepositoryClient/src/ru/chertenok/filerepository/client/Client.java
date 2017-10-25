@@ -1,6 +1,5 @@
 package ru.chertenok.filerepository.client;
 
-import ru.chertenok.filerepository.common.Utils;
 import ru.chertenok.filerepository.common.config.ConfigCommon;
 import ru.chertenok.filerepository.common.messages.Message;
 import ru.chertenok.filerepository.common.messages.MessageLogin;
@@ -40,13 +39,13 @@ public class Client {
         if (isConnected) return isConnected;
         try {
             log.log(Level.INFO, "connect to socket server...");
-            server = new Socket(ConfigCommon.getServerUrl(), ConfigCommon.getServerPort());
-            log.log(Level.INFO, "connected to server " + ConfigCommon.getServerUrl() + ":" + ConfigCommon.getServerPort());
+            server = new Socket(ConfigCommon.getServerURL(), ConfigCommon.getServerPort());
+            log.log(Level.INFO, "connected to server " + ConfigCommon.getServerURL() + ":" + ConfigCommon.getServerPort());
             out = new ObjectOutputStream(server.getOutputStream());
             in = new ObjectInputStream(server.getInputStream());
             isConnected = true;
         } catch (IOException e) {
-            log.log(Level.SEVERE, "socket is not connected ("+ ConfigCommon.getServerUrl() + ":" + ConfigCommon.getServerPort()+"): " + e);
+            log.log(Level.SEVERE, "socket is not connected ("+ ConfigCommon.getServerURL() + ":" + ConfigCommon.getServerPort()+"): " + e);
             isConnected = false;
         }
         return isConnected;
@@ -59,18 +58,19 @@ public class Client {
         }
         try {
             server.close();
+            isConnected = false;
             log.log(Level.INFO, "socket closed");
-        } catch (IOException e1) {
-
-            e1.printStackTrace();
+        } catch (IOException e) {
+            log.log(Level.SEVERE,"error on disconnect: "+e);
+            isConnected = false;
         }
     }
 
-    public String register(String login,String password)
+    public String register(String login,String password,boolean newUser)
     {
         if (!isConnected) return "not connected";
 
-        sendMessage(new MessageLogin(login,password,true),out);
+        sendMessage(new MessageLogin(login,password,newUser),out);
         Message m = readMessage(in);
         if (m instanceof MessageResult)
         {

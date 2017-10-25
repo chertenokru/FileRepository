@@ -30,9 +30,9 @@ public class Server {
             startSocket();
 
         } catch (SQLException e) {
-            e.printStackTrace();
+           log.log(Level.SEVERE,"sql error on connect: "+e);
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            log.log(Level.SEVERE,"bd driver class not fount: "+e);
         }
     }
 
