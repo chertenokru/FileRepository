@@ -1,14 +1,17 @@
-package ru.chertenok.filerepository.common;
+package ru.chertenok.filerepository.common.utils;
 
 import ru.chertenok.filerepository.common.messages.Message;
+import ru.chertenok.filerepository.common.messages.MessageClose;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.SocketException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class Utils {
+public class MessageUtils {
     private static Logger log = Logger.getGlobal();
 
 
@@ -20,7 +23,12 @@ public class Utils {
             out.writeObject(message);
             out.flush();
             return true;
-        } catch (IOException e) {
+        }
+        catch (SocketException e){
+            log.log(Level.SEVERE,"error sending messages: "+e);
+            return false;
+        }
+        catch (IOException e) {
             log.log(Level.SEVERE,"error sending messages: "+e);
             return false;
         }
@@ -32,7 +40,12 @@ public class Utils {
         try {
             object = in.readObject();
             log.log(Level.INFO, "received " + object.getClass().getSimpleName());
-        } catch (IOException e) {
+        }
+        catch (EOFException e){
+            object = new MessageClose();
+        }
+
+        catch (IOException e) {
             log.log(Level.SEVERE,"error reciving message: "+e);
         } catch (ClassNotFoundException e) {
             log.log(Level.SEVERE,"recived unknow message: "+e);
@@ -45,6 +58,6 @@ public class Utils {
 
 
 
-    private Utils() {
+    private MessageUtils() {
     }
 }

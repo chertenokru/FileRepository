@@ -1,4 +1,4 @@
-package ru.chertenok.filerepository.client.util;
+package ru.chertenok.filerepository.server.utils;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -18,9 +18,10 @@ public class Utils {
     }
 
 
+    private Utils() {
+    }
 
-
-    public static String getHashCode(String st,HashCode code ) {
+    public static String getHashCode(String st, HashCode code ) {
         MessageDigest messageDigest = null;
         byte[] digest = new byte[0];
 

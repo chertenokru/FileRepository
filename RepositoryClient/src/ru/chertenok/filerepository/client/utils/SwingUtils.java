@@ -4,7 +4,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 
-public class Utils {
+public class SwingUtils {
 
     public static Border getBorderWithTitle(String title) {
         return

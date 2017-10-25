@@ -2,7 +2,7 @@ package ru.chertenok.filerepository.client;
 
 
 import ru.chertenok.filerepository.client.config.ConfigClient;
-import ru.chertenok.filerepository.client.utils.Utils;
+import ru.chertenok.filerepository.client.utils.SwingUtils;
 import ru.chertenok.filerepository.common.config.ConfigCommon;
 
 import javax.swing.*;
@@ -30,6 +30,8 @@ public class Main extends JFrame {
     private JTextField tfIP;
     private JTextField tfPort;
     private JButton bConnect;
+    private JButton bLogin;
+    private JLabel lMessage;
 
     public static void main(String[] args) {
         new Main();
@@ -101,7 +103,7 @@ public class Main extends JFrame {
 
     private void createUserPanel(GridBagConstraints constr) {
         JPanel pUsersOperation = new JPanel();
-        pUsersOperation.setBorder(Utils.getBorderWithTitle("|  Setting  |"));
+        pUsersOperation.setBorder(SwingUtils.getBorderWithTitle("|  Setting  |"));
         pUsersOperation.setPreferredSize(new Dimension(400, 600));
         pUsersOperation.setLayout(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
@@ -156,7 +158,7 @@ public class Main extends JFrame {
         statusLogin = new JPanel();
 
         pUsersOperation.add(statusLogin, c);
-        updateStatus();
+
 
         c.gridy++;
         c.gridx = 0;
@@ -181,17 +183,34 @@ public class Main extends JFrame {
         c.gridx = 0;
         c.gridy++;
 
-        JButton b = new JButton("Login/Registry");
-        b.addActionListener(new ActionListener() {
+        bLogin = new JButton("Log In");
+        bLogin.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                b.setText(client.register(tfLogin.getText(), String.copyValueOf(pfPassword.getPassword()),cbNewUser.isSelected()));
+                if (client.isLoggIn())
+                {
+                    client.logOut();
+                }
+                else
+                {
+                    lMessage.setText(client.register(tfLogin.getText(), String.copyValueOf(pfPassword.getPassword()),cbNewUser.isSelected()));
+
+                }
+
+                updateStatus();
             }
         });
-        pUsersOperation.add(b, c);
+        pUsersOperation.add(bLogin, c);
+        c.gridx = 0;
+        c.gridy++;
+        lMessage = new JLabel("");
+        pUsersOperation.add(lMessage, c);
+
         c.gridwidth = 1;
 
+
         constr.anchor = GridBagConstraints.NORTH;
+        updateStatus();
         pRoot.add(pUsersOperation, constr);
     }
 
@@ -201,23 +220,38 @@ public class Main extends JFrame {
             bConnect.setText("Disconnect");
             tfIP.setEnabled(false);
             tfPort.setEnabled(false);
+            tfLogin.setEnabled(true);
+            pfPassword.setEnabled(true);
+            bLogin.setEnabled(true);
+            cbNewUser.setEnabled(true);
         } else {
             statusConnection.setBackground(Color.RED);
             bConnect.setText("Connect");
             tfIP.setEnabled(true);
             tfPort.setEnabled(true);
-
+            tfLogin.setEnabled(false);
+            pfPassword.setEnabled(false);
+            bLogin.setEnabled(false);
+            cbNewUser.setEnabled(false);
         }
-        if (client.isLoggIn()) {
+        if (client.isLoggIn() && client.isConnected()){
             statusLogin.setBackground(Color.GREEN);
-        } else {
+            tfLogin.setEnabled(false);
+            pfPassword.setEnabled(false);
+            cbNewUser.setEnabled(false);
+            bLogin.setText("Log out");
+        } else if (client.isConnected()) {
             statusLogin.setBackground(Color.RED);
+            tfLogin.setEnabled(true);
+            pfPassword.setEnabled(true);
+            cbNewUser.setEnabled(true);
+            bLogin.setText("Log In");
         }
     }
 
     private void createServerPanel(GridBagConstraints constr) {
         JPanel pServer = new JPanel();
-        pServer.setBorder(Utils.getBorderWithTitle("|  Server storage  |"));
+        pServer.setBorder(SwingUtils.getBorderWithTitle("|  Server storage  |"));
         pServer.setPreferredSize(new Dimension(300, 600));
 
         pRoot.add(pServer, constr);
@@ -225,7 +259,7 @@ public class Main extends JFrame {
 
     private void createLocalPanel(GridBagConstraints constr) {
         JPanel pLocal = new JPanel();
-        pLocal.setBorder(Utils.getBorderWithTitle("|  Local storage  |"));
+        pLocal.setBorder(SwingUtils.getBorderWithTitle("|  Local storage  |"));
         pLocal.setPreferredSize(new Dimension(300, 600));
         pRoot.add(pLocal, constr);
     }

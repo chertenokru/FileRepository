@@ -1,9 +1,7 @@
 package ru.chertenok.filerepository.client;
 
 import ru.chertenok.filerepository.common.config.ConfigCommon;
-import ru.chertenok.filerepository.common.messages.Message;
-import ru.chertenok.filerepository.common.messages.MessageLogin;
-import ru.chertenok.filerepository.common.messages.MessageResult;
+import ru.chertenok.filerepository.common.messages.*;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -12,8 +10,8 @@ import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static ru.chertenok.filerepository.common.Utils.readMessage;
-import static ru.chertenok.filerepository.common.Utils.sendMessage;
+import static ru.chertenok.filerepository.common.utils.MessageUtils.readMessage;
+import static ru.chertenok.filerepository.common.utils.MessageUtils.sendMessage;
 
 public class Client {
     private Logger log = Logger.getGlobal();
@@ -45,7 +43,7 @@ public class Client {
             in = new ObjectInputStream(server.getInputStream());
             isConnected = true;
         } catch (IOException e) {
-            log.log(Level.SEVERE, "socket is not connected ("+ ConfigCommon.getServerURL() + ":" + ConfigCommon.getServerPort()+"): " + e);
+            log.log(Level.SEVERE, "socket is not connected (" + ConfigCommon.getServerURL() + ":" + ConfigCommon.getServerPort() + "): " + e);
             isConnected = false;
         }
         return isConnected;
@@ -56,36 +54,69 @@ public class Client {
             log.log(Level.INFO, "not connected");
             return;
         }
+
         try {
-            server.close();
-            isConnected = false;
-            log.log(Level.INFO, "socket closed");
+            log.log(Level.INFO, "send closeMessage to server");
+            sendMessage(new MessageClose(), out);
+            if (in != null) in.close();
+            if (out != null) out.close();
         } catch (IOException e) {
-            log.log(Level.SEVERE,"error on disconnect: "+e);
+            log.log(Level.SEVERE, "error closing in/out stream: " + e);
+        } finally {
+            if (server.isConnected()) try {
+                server.close();
+            } catch (IOException e) {
+                log.log(Level.SEVERE, "error closing server: " + e);
+            }
             isConnected = false;
+            isLoggIn = false;
+            log.log(Level.INFO, "socket closed");
+
+        }
+
+    }
+
+    public String register(String login, String password, boolean newUser) {
+        if (!isConnected) return "not connected";
+
+        if (sendMessage(new MessageLogin(login, password, newUser), out)) {
+            Message m = readMessage(in);
+            if (m instanceof MessageResult) {
+                MessageResult mr = (MessageResult) m;
+                if (mr.success) {
+                    isLoggIn = true;
+                    return mr.message;
+                } else {
+                    return mr.message;
+                }
+            } else {
+                processMessage(m);
+                return "server not return result";
+            }
+        } else {
+            disconnect();
+            return "connection lost ...";
+        }
+
+    }
+
+
+    private void processMessage(Message message) {
+        if (message == null) return;
+
+        if (message instanceof MessageClose) {
+            log.log(Level.INFO, "server closed session ");
+            disconnect();
         }
     }
 
-    public String register(String login,String password,boolean newUser)
-    {
-        if (!isConnected) return "not connected";
+    public void logOut() {
+        if (sendMessage(new MessageLogOut(),out)) {
+            isLoggIn = false;
+        } else {
+            disconnect();
+        }
 
-        sendMessage(new MessageLogin(login,password,newUser),out);
-        Message m = readMessage(in);
-        if (m instanceof MessageResult)
-        {
-            MessageResult mr = (MessageResult)m;
-            if (mr.success){
-                isLoggIn = true;
-                return mr.message;
-            } else
-            {
-                return mr.message;
-            }
-        }  else
-            return "server not return resalt";
+
     }
-
-
-
 }
