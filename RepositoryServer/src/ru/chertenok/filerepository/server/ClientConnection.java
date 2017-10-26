@@ -2,11 +2,16 @@ package ru.chertenok.filerepository.server;
 
 import ru.chertenok.filerepository.common.messages.*;
 import ru.chertenok.filerepository.server.bd.BDHandler;
+import ru.chertenok.filerepository.server.config.ConfigServer;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -69,76 +74,8 @@ public class ClientConnection extends Thread {
         if (message == null) return;
         // =============   login  ============================
         if (message instanceof MessageLogin) {
-            MessageLogin m = (MessageLogin) message;
-            // уже зареган
-            if (isLoggIn) {
-                if (userLogin.equals(m.userLogin))
-                   sendMessage(new MessageResult(true, "user " + m.userLogin + " registered"), out);
-                else
-                    sendMessage(new MessageResult(false, "client already registered with other login"), out);
-                return;
-            }
-
-            // проверки
-            if (m.userLogin.trim().length()<3)
-            {
-                log.log(Level.INFO,"length of UserName < 3");
-                sendMessage(new MessageResult(false, "length of UserName < 3"), out);
-                return;
-            }
-            if (m.userPassword.trim().length()<5)
-            {
-                log.log(Level.INFO,"length of User Password < 5");
-                sendMessage(new MessageResult(false, "length of User Password < 5"), out);
-                return;
-            }
-
-
-            if (m.isNewUser)
-                // если новый
-                synchronized (BDHandler.class) {
-                    try {
-                        if (BDHandler.checkName(m.userLogin)) {
-                            BDHandler.registerUser(m.userLogin, m.userPassword);
-                            isLoggIn = true;
-                            userLogin = m.userLogin.trim();
-                            log.log(Level.INFO,"user " + m.userLogin + " registered");
-                            sendMessage(new MessageResult(true, "user " + m.userLogin + " registered"), out);
-                        } else
-                        {
-                            log.log(Level.INFO,"user " + m.userLogin + " already exist");
-                            sendMessage(new MessageResult(false, "user " + m.userLogin + " already exist"), out);
-                        }
-                    } catch (SQLException e) {
-                        log.log(Level.SEVERE, "sql error user " + m.userLogin + " registration: " + e);
-                        sendMessage(new MessageResult(false, "internal error"), out);
-                    }
-                }
-            else
-                // старый
-                {
-                    try {
-                        if (BDHandler.loginUser(m.userLogin, m.userPassword))
-                        {
-                            log.log(Level.INFO,"user " + m.userLogin + " login");
-                            sendMessage(new MessageResult(true, "user " + m.userLogin + " login"), out);
-                            isLoggIn = true;
-                            userLogin = m.userLogin.trim();
-
-                        }else
-                        {
-                            log.log(Level.INFO,"user " + m.userLogin + " not login");
-                            sendMessage(new MessageResult(false, "user " + m.userLogin + " not login,check login and password"), out);
-
-                        }
-
-                    } catch (Exception e) {
-                        log.log(Level.SEVERE,"internal error: "+e);
-                        sendMessage(new MessageResult(false, "internal error"), out);
-                    }
-
-
-                }
+             login((MessageLogin) message);
+             return;
         }
 
         // ===================== close connection ==========================
@@ -146,13 +83,137 @@ public class ClientConnection extends Thread {
             log.log(Level.INFO, "client closed session " + client.getPort() + ")");
             isLoggIn = false;
             isStop = true;
+            return;
         }
 
         // =================== log out ==================================
         if (message instanceof MessageLogOut) {
             log.log(Level.INFO, "client logout " + client.getPort() + ")");
             isLoggIn = false;
+            return;
         }
+
+        // ================= load file ============================
+        if (message instanceof MessageFile)
+        {
+            loadFile((MessageFile) message);
+            return;
+        }
+    }
+
+    private void login(MessageLogin message) {
+        MessageLogin m = message;
+        // уже зареган
+        if (isLoggIn) {
+            if (userLogin.equals(m.userLogin))
+               sendMessage(new MessageResult(true, "user " + m.userLogin + " registered"), out);
+            else
+                sendMessage(new MessageResult(false, "client already registered with other login"), out);
+            return;
+        }
+
+        // проверки
+        if (m.userLogin.trim().length()<3)
+        {
+            log.log(Level.INFO,"length of UserName < 3");
+            sendMessage(new MessageResult(false, "length of UserName < 3"), out);
+            return;
+        }
+        if (m.userPassword.trim().length()<5)
+        {
+            log.log(Level.INFO,"length of User Password < 5");
+            sendMessage(new MessageResult(false, "length of User Password < 5"), out);
+            return;
+        }
+
+
+        if (m.isNewUser)
+            // если новый
+            synchronized (BDHandler.class) {
+                try {
+                    if (BDHandler.checkName(m.userLogin)) {
+                        BDHandler.registerUser(m.userLogin, m.userPassword);
+                        isLoggIn = true;
+                        userLogin = m.userLogin.trim();
+                        log.log(Level.INFO,"user " + m.userLogin + " registered");
+                        sendMessage(new MessageResult(true, "user " + m.userLogin + " registered"), out);
+                    } else
+                    {
+                        log.log(Level.INFO,"user " + m.userLogin + " already exist");
+                        sendMessage(new MessageResult(false, "user " + m.userLogin + " already exist"), out);
+                    }
+                } catch (SQLException e) {
+                    log.log(Level.SEVERE, "sql error user " + m.userLogin + " registration: " + e);
+                    sendMessage(new MessageResult(false, "internal error"), out);
+                }
+            }
+        else
+            // старый
+            {
+                try {
+                    if (BDHandler.loginUser(m.userLogin, m.userPassword))
+                    {
+                        log.log(Level.INFO,"user " + m.userLogin + " login");
+                        sendMessage(new MessageResult(true, "user " + m.userLogin + " login"), out);
+                        isLoggIn = true;
+                        userLogin = m.userLogin.trim();
+                    }else
+                    {
+                        log.log(Level.INFO,"user " + m.userLogin + " not login");
+                        sendMessage(new MessageResult(false, "user " + m.userLogin + " not login,check login and password"), out);
+                    }
+
+                } catch (Exception e) {
+                    log.log(Level.SEVERE,"internal error: "+e);
+                    sendMessage(new MessageResult(false, "internal error"), out);
+                }
+            }
+    }
+
+    private void loadFile(MessageFile message) {
+        if (!isLoggIn)
+        {
+            sendMessage(new MessageResult(false,"not login"),out);
+            return;
+        }
+        // принимаем
+        MessageFile messageFile = message;
+        if (!checkFileExist()) {
+            try {
+                try {
+                    messageFile.fileInfo.ID = BDHandler.getFileID(messageFile.fileInfo.SourceFileName,userLogin);
+                } catch (Exception e) {
+                    log.log(Level.SEVERE,"error get FileID: "+e);
+                    sendMessage(new MessageResult(false,"internal error"),out);
+                    return;
+                }
+                // существует ли путь
+                Path path_dir = Paths.get(ConfigServer.getFileStorege());
+                if (!Files.exists(path_dir)) Files.createDirectories(path_dir);
+
+                Path path = Paths.get(ConfigServer.getFileStorege()+messageFile.fileInfo.ID+ConfigServer.FILE_EXT);
+                if (Files.exists(path, LinkOption.NOFOLLOW_LINKS))
+                {
+                    log.log(Level.SEVERE,"file exist: "+path.toString());
+                    sendMessage(new MessageResult(false,"error. file exist?"),out);
+                    return;
+                }
+                else {
+                    Files.write(path, messageFile.data);
+                    log.log(Level.SEVERE, "file received: " + messageFile.fileInfo.fileName+ " saved as "
+                            + path.toString());
+                    BDHandler.addUserFileToBD(userLogin,message.fileInfo);
+                    sendMessage(new MessageResult(true, "file received " + messageFile.fileInfo.fileName), out);
+                }
+            } catch (IOException e) {
+                log.log(Level.SEVERE, "error file receiving: " + e);
+                sendMessage(new MessageResult(false, "error file receiving " + messageFile.fileInfo.fileName), out);
+            }
+        }
+    }
+
+    private boolean checkFileExist() {
+        return false;
     }
 
     public void stopServer() {

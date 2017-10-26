@@ -2,8 +2,8 @@ package ru.chertenok.filerepository.client.config;
 
 import java.util.logging.Level;
 
+// todo external setting file
 public class ConfigClient {
-
     private final static int WINDOW_WIDTH = 800;
     private final static int WINDOW_HEIGHT = 640;
     private final static String DEFAULT_LOCAL_FILES_PATH = "/LocalFiles";

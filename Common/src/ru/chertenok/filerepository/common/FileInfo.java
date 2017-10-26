@@ -1,12 +1,13 @@
 package ru.chertenok.filerepository.common;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class FileInfo {
+public class FileInfo implements Serializable {
     // имя файла
     public final String fileName;
     // полный исходный путь
@@ -14,6 +15,7 @@ public class FileInfo {
     // дата модицикации
     public final String fileDT;
     public final long fileSize;
+    public String ID;
     //public final
 
     public FileInfo(String fullFileName) throws IOException {

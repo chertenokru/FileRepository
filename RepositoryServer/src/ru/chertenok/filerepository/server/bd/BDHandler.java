@@ -1,5 +1,6 @@
 package ru.chertenok.filerepository.server.bd;
 
+import ru.chertenok.filerepository.common.FileInfo;
 import ru.chertenok.filerepository.server.utils.Utils;
 
 import java.sql.*;
@@ -31,9 +32,43 @@ public class BDHandler {
 
     }
 
+    public static  String getFileID(String fullFileName,String userLogin) throws Exception {
+        String result = getHashCode(fullFileName+userLogin, Utils.HashCode.SH256);
+        if (!checkHashInBd(result))
+        {
+            result = getHashCode(fullFileName+userLogin+System.currentTimeMillis(), Utils.HashCode.SH256);
+            if (checkHashInBd(result)) {
+                log.log(Level.SEVERE,"HashID is dublicate: hash - "+result+" , file  - "+fullFileName+", user "+userLogin);
+                throw new Exception("HashID is dublicate");
+            }
+        }
+        return result;
+    }
+
+    private static boolean checkHashInBd(String hash) {
+        boolean result = true;
+        PreparedStatement st = null;
+        try {
+            st = connection.prepareStatement("select count(*) from repository where Hash = ?");
+            st.setString(1, hash);
+
+            ResultSet rs = st.executeQuery();
+            if (rs != null) {
+                if (rs.getInt(1) == 0) {
+                    result = false;
+                }
+                rs.close();
+            }
+            st.close();
+        } catch (SQLException e) {
+            log.log(Level.SEVERE,"check hash - sql error: "+e);
+        } finally {
+            return result;
+        }
+
+}
 
     public static void registerUser(String userName, String userPassword) throws SQLException {
-
         PreparedStatement st = connection.prepareStatement("insert INTO users (login,password) VALUES (?,?)");
         st.setString(1, userName.trim());
         st.setString(2, getHashCode(userPassword.trim(), Utils.HashCode.SH256));
@@ -61,7 +96,7 @@ public class BDHandler {
 
     }
 
-    public static void addUserFile(String userName, String serverFileName, String clientFileName) {
+    public static void addUserFileToBD(String userName, FileInfo fi) {
 
     }
 

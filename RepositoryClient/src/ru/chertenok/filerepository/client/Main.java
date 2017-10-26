@@ -32,6 +32,9 @@ public class Main extends JFrame {
     private JButton bConnect;
     private JButton bLogin;
     private JLabel lMessage;
+    private JButton bDelete;
+    private JButton bDownload;
+    private JButton bUpload;
 
     public static void main(String[] args) {
         new Main();
@@ -206,8 +209,28 @@ public class Main extends JFrame {
         lMessage = new JLabel("");
         pUsersOperation.add(lMessage, c);
 
-        c.gridwidth = 1;
 
+        c.gridx = 0;
+        c.gridy++;
+
+        pUsersOperation.add(new JLabel("<html>Click the button or  drag the file to [Server Panel] <br> to upload the file to the server</html>"),c);
+        bUpload = new JButton("Upload file");
+        bUpload.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                JFileChooser fc = new JFileChooser("Выберите файл для отправки на сервер");
+                if (fc.showOpenDialog(Main.this) == JFileChooser.APPROVE_OPTION)
+                {
+                    lMessage.setText(client.uploadFile(fc.getSelectedFile().toString()));
+
+                }
+            }
+        });
+
+        c.gridwidth = 1;
+        c.gridx = 0;
+        c.gridy++;
+        pUsersOperation.add(bUpload,c);
 
         constr.anchor = GridBagConstraints.NORTH;
         updateStatus();
@@ -233,6 +256,8 @@ public class Main extends JFrame {
             pfPassword.setEnabled(false);
             bLogin.setEnabled(false);
             cbNewUser.setEnabled(false);
+            bDelete.setEnabled(false);
+            bDownload.setEnabled(false);
         }
         if (client.isLoggIn() && client.isConnected()){
             statusLogin.setBackground(Color.GREEN);
@@ -240,19 +265,31 @@ public class Main extends JFrame {
             pfPassword.setEnabled(false);
             cbNewUser.setEnabled(false);
             bLogin.setText("Log out");
+            bDelete.setEnabled(true);
+            bDownload.setEnabled(true);
         } else if (client.isConnected()) {
             statusLogin.setBackground(Color.RED);
             tfLogin.setEnabled(true);
             pfPassword.setEnabled(true);
             cbNewUser.setEnabled(true);
             bLogin.setText("Log In");
+            bDelete.setEnabled(false);
+            bDownload.setEnabled(false);
+
         }
     }
 
     private void createServerPanel(GridBagConstraints constr) {
         JPanel pServer = new JPanel();
         pServer.setBorder(SwingUtils.getBorderWithTitle("|  Server storage  |"));
-        pServer.setPreferredSize(new Dimension(300, 600));
+        pServer.setPreferredSize(new Dimension(400, 600));
+        JPanel p = new JPanel(new BorderLayout());
+        p.add(new JLabel("Select file and Click the button to download/delete file from server"),BorderLayout.NORTH);
+        bDelete = new JButton("Delete file");
+        p.add(bDelete,BorderLayout.EAST);
+        bDownload = new JButton("Download file");
+        p.add(bDownload,BorderLayout.WEST);
+        pServer.add(p,BorderLayout.NORTH);
 
         pRoot.add(pServer, constr);
     }

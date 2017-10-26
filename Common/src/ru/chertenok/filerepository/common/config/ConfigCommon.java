@@ -1,5 +1,6 @@
 package ru.chertenok.filerepository.common.config;
 
+// todo external setting file
 public class ConfigCommon {
     private static final String DEFAULT_SERVER_URL = "localhost";
     private static final int DEFAULT_SERVER_PORT = 8000;

@@ -76,6 +76,33 @@ public class Client {
 
     }
 
+    public String uploadFile(String file) {
+        if (!isConnected) return "not connected";
+        if (!isLoggIn) return "not login";
+        MessageFile m = null;
+        try {
+            m = new MessageFile(file);
+        } catch (IOException e) {
+            log.log(Level.SEVERE,"не удалось отправить файл: "+e);
+            return "не удалось отправить файл: "+e;
+        }
+        if (sendMessage(m, out)) {
+            Message mes = readMessage(in);
+            if (mes instanceof MessageResult) {
+                return ((MessageResult) mes).message;
+            } else {
+                processMessage(m);
+                return "server not return result";
+            }
+        } else {
+            disconnect();
+            return "connection lost ...";
+        }
+
+
+
+    }
+
     public String register(String login, String password, boolean newUser) {
         if (!isConnected) return "not connected";
 
@@ -111,7 +138,7 @@ public class Client {
     }
 
     public void logOut() {
-        if (sendMessage(new MessageLogOut(),out)) {
+        if (sendMessage(new MessageLogOut(), out)) {
             isLoggIn = false;
         } else {
             disconnect();
