@@ -3,7 +3,9 @@ package ru.chertenok.filerepository.server.bd;
 import ru.chertenok.filerepository.common.FileInfo;
 import ru.chertenok.filerepository.server.utils.Utils;
 
+import java.io.IOException;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -32,13 +34,12 @@ public class BDHandler {
 
     }
 
-    public static  String getFileID(String fullFileName,String userLogin) throws Exception {
-        String result = getHashCode(fullFileName+userLogin, Utils.HashCode.SH256);
-        if (!checkHashInBd(result))
-        {
-            result = getHashCode(fullFileName+userLogin+System.currentTimeMillis(), Utils.HashCode.SH256);
+    public static String getFileID(String fullFileName, String userLogin) throws Exception {
+        String result = getHashCode(fullFileName + userLogin, Utils.HashCode.SH256);
+        if (!checkHashInBd(result)) {
+            result = getHashCode(fullFileName + userLogin + System.currentTimeMillis(), Utils.HashCode.SH256);
             if (checkHashInBd(result)) {
-                log.log(Level.SEVERE,"HashID is dublicate: hash - "+result+" , file  - "+fullFileName+", user "+userLogin);
+                log.log(Level.SEVERE, "HashID is dublicate: hash - " + result + " , file  - " + fullFileName + ", user " + userLogin);
                 throw new Exception("HashID is dublicate");
             }
         }
@@ -61,12 +62,12 @@ public class BDHandler {
             }
             st.close();
         } catch (SQLException e) {
-            log.log(Level.SEVERE,"check hash - sql error: "+e);
+            log.log(Level.SEVERE, "check hash - sql error: " + e);
         } finally {
             return result;
         }
 
-}
+    }
 
     public static void registerUser(String userName, String userPassword) throws SQLException {
         PreparedStatement st = connection.prepareStatement("insert INTO users (login,password) VALUES (?,?)");
@@ -96,8 +97,18 @@ public class BDHandler {
 
     }
 
-    public static void addUserFileToBD(String userName, FileInfo fi) {
-
+    public static void addUserFileToBD(String userName, FileInfo fi) throws SQLException {
+        PreparedStatement st = connection.prepareStatement(
+                "insert INTO repository (Hash,UserLogin,UserFileName,userFullName,Size,dt) VALUES (?,?,?,?,?,?)");
+        st.setString(1, fi.ID);
+        st.setString(2, userName);
+        st.setString(3, fi.fileName);
+        st.setString(4, fi.SourceFileName);
+        st.setString(5, String.valueOf(fi.fileSize));
+        st.setString(6, fi.fileDT);
+        st.execute();
+        st.close();
+        log.log(Level.INFO, "file [" + fi.fileName + "] inserted in bd");
     }
 
 
@@ -116,4 +127,27 @@ public class BDHandler {
         st.close();
         return result;
     }
+
+    public static FileInfo[] getFileList(String userLogin) throws SQLException, IOException {
+        log.log(Level.INFO, "select files from bd to user [" + userLogin + "] ");
+        PreparedStatement st = connection.prepareStatement("select Hash,UserFileName,userFullName,dt, Size from repository where UserLogin = ?");
+        st.setString(1, userLogin);
+        ResultSet rs = st.executeQuery();
+        ArrayList<FileInfo> list = new ArrayList<>();
+
+        if (rs != null) {
+            while (rs.next()) {
+                FileInfo fi = new FileInfo(rs.getString("UserFileName"),
+                        rs.getString("userFullName"), rs.getString("dt"),
+                        rs.getLong("Size"), rs.getString("Hash"));
+                list.add(fi);
+            }
+            rs.close();
+        }
+        st.close();
+        FileInfo[] res = new FileInfo[list.size()];
+        return  list.toArray(res);
+    }
+
+
 }

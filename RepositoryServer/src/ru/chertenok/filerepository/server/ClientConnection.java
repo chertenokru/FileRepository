@@ -93,13 +93,32 @@ public class ClientConnection extends Thread {
             return;
         }
 
+        // ========================= command for registered user only
+        if (!isLoggIn) {
+            sendMessage(new MessageResult(false, "user  not login"), out);
+            return;
+        }
+
         // ================= load file ============================
         if (message instanceof MessageFile)
         {
             loadFile((MessageFile) message);
             return;
         }
-    }
+        // ============= get file list ============================
+        if (message instanceof MessageGetList)
+        {
+            try {
+                sendMessage(new MessageFileList(BDHandler.getFileList(userLogin)),out);
+                log.log(Level.INFO,"send file list to user "+userLogin);
+
+            } catch (Exception e) {
+                log.log(Level.SEVERE,"file list create error - "+e);
+                sendMessage(new MessageResult(false,"internal error"),out);
+            }
+        }
+
+        }
 
     private void login(MessageLogin message) {
         MessageLogin m = message;
@@ -171,11 +190,6 @@ public class ClientConnection extends Thread {
     }
 
     private void loadFile(MessageFile message) {
-        if (!isLoggIn)
-        {
-            sendMessage(new MessageResult(false,"not login"),out);
-            return;
-        }
         // принимаем
         MessageFile messageFile = message;
         if (!checkFileExist()) {
@@ -202,8 +216,16 @@ public class ClientConnection extends Thread {
                     Files.write(path, messageFile.data);
                     log.log(Level.SEVERE, "file received: " + messageFile.fileInfo.fileName+ " saved as "
                             + path.toString());
-                    BDHandler.addUserFileToBD(userLogin,message.fileInfo);
-                    sendMessage(new MessageResult(true, "file received " + messageFile.fileInfo.fileName), out);
+                    try {
+                        BDHandler.addUserFileToBD(userLogin,message.fileInfo);
+                        sendMessage(new MessageResult(true, "file received " + messageFile.fileInfo.fileName), out);
+                    } catch (SQLException e) {
+                        // if error - delete file from disk
+                        log.log(Level.SEVERE, "error save file into bd: " + e);
+                        Files.delete(path);
+                        sendMessage(new MessageResult(false, "error file receiving " + messageFile.fileInfo.fileName), out);
+                    }
+
                 }
             } catch (IOException e) {
                 log.log(Level.SEVERE, "error file receiving: " + e);

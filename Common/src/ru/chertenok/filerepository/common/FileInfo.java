@@ -9,12 +9,12 @@ import java.nio.file.Paths;
 
 public class FileInfo implements Serializable {
     // имя файла
-    public final String fileName;
+    public  String fileName;
     // полный исходный путь
-    public final String SourceFileName;
+    public  String SourceFileName;
     // дата модицикации
-    public final String fileDT;
-    public final long fileSize;
+    public  String fileDT;
+    public  long fileSize;
     public String ID;
     //public final
 
@@ -27,5 +27,27 @@ public class FileInfo implements Serializable {
         fileName = p.getFileName().toString();
         fileSize = Files.size(p);
 
+    }
+
+    public FileInfo() {
+    }
+
+    public FileInfo(String fileName, String sourceFileName, String fileDT, long fileSize, String ID) {
+        this.fileName = fileName;
+        SourceFileName = sourceFileName;
+        this.fileDT = fileDT;
+        this.fileSize = fileSize;
+        this.ID = ID;
+    }
+
+    @Override
+    public String toString() {
+        return "FileInfo{" +
+                "fileName='" + fileName + '\'' +
+                ", SourceFileName='" + SourceFileName + '\'' +
+                ", fileDT='" + fileDT + '\'' +
+                ", fileSize=" + fileSize +
+                ", ID='" + ID + '\'' +
+                '}';
     }
 }

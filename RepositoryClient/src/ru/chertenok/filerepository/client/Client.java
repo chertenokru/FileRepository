@@ -1,5 +1,6 @@
 package ru.chertenok.filerepository.client;
 
+import ru.chertenok.filerepository.common.FileInfo;
 import ru.chertenok.filerepository.common.config.ConfigCommon;
 import ru.chertenok.filerepository.common.messages.*;
 
@@ -83,8 +84,8 @@ public class Client {
         try {
             m = new MessageFile(file);
         } catch (IOException e) {
-            log.log(Level.SEVERE,"не удалось отправить файл: "+e);
-            return "не удалось отправить файл: "+e;
+            log.log(Level.SEVERE, "не удалось отправить файл: " + e);
+            return "не удалось отправить файл: " + e;
         }
         if (sendMessage(m, out)) {
             Message mes = readMessage(in);
@@ -98,7 +99,6 @@ public class Client {
             disconnect();
             return "connection lost ...";
         }
-
 
 
     }
@@ -127,6 +127,20 @@ public class Client {
 
     }
 
+    public FileInfo[] getFileList() {
+        if (isLoggIn) {
+            if (sendMessage(new MessageGetList(), out)) {
+                Message m = readMessage(in);
+                if (m instanceof MessageFileList){
+                    return ((MessageFileList) m).fileInfos;
+                } else processMessage(m);
+            }else {
+                disconnect();
+                return new FileInfo[0];
+            }
+        }
+        return null;
+    }
 
     private void processMessage(Message message) {
         if (message == null) return;
@@ -134,7 +148,16 @@ public class Client {
         if (message instanceof MessageClose) {
             log.log(Level.INFO, "server closed session ");
             disconnect();
+            return;
         }
+
+        if (message instanceof MessageFileList) {
+            for (FileInfo fi : ((MessageFileList) message).fileInfos) {
+                log.log(Level.INFO, fi.toString());
+            }
+        }
+
+
     }
 
     public void logOut() {

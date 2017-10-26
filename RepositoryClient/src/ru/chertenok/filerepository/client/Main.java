@@ -197,6 +197,7 @@ public class Main extends JFrame {
                 else
                 {
                     lMessage.setText(client.register(tfLogin.getText(), String.copyValueOf(pfPassword.getPassword()),cbNewUser.isSelected()));
+                    if (client.isLoggIn()) client.getFileList();
 
                 }
 
