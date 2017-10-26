@@ -75,6 +75,7 @@ public class BDHandler {
         st.setString(2, getHashCode(userPassword.trim(), Utils.HashCode.SH256));
         st.execute();
         st.close();
+        connection.commit();
 
 
     }
@@ -108,6 +109,7 @@ public class BDHandler {
         st.setString(6, fi.fileDT);
         st.execute();
         st.close();
+        connection.commit();
         log.log(Level.INFO, "file [" + fi.fileName + "] inserted in bd");
     }
 
