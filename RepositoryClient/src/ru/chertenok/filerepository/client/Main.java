@@ -217,7 +217,7 @@ public class Main extends JFrame {
         c.gridx = 0;
         c.gridy++;
 
-        pUsersOperation.add(new JLabel("<html>Click the button or  drag the file to [Server Panel] <br> to upload the file to the server</html>"),c);
+        pUsersOperation.add(new JLabel(""), c);
         bUpload = new JButton("Upload file");
         bUpload.addActionListener(new ActionListener() {
             @Override
@@ -304,13 +304,14 @@ public class Main extends JFrame {
         pServer.setBorder(SwingUtils.getBorderWithTitle("|  Server storage  |"));
         pServer.setPreferredSize(new Dimension(400, 600));
         JPanel p = new JPanel(new BorderLayout());
-        p.add(new JLabel("Select file and Click the button to download/delete file from server"),BorderLayout.NORTH);
+        //p.add(new JLabel(""),BorderLayout.NORTH);
         bDelete = new JButton("Delete file");
         bDelete.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 if (fileList.isSelectionEmpty()) return;
                 showMessage(client.deleteFile(listModel.elementAt(fileList.getSelectedIndex())));
+                updateFileList();
             }
         });
         p.add(bDelete,BorderLayout.EAST);

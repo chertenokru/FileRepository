@@ -1,6 +1,5 @@
 package ru.chertenok.filerepository.server;
 
-import ru.chertenok.filerepository.common.FileInfo;
 import ru.chertenok.filerepository.common.messages.*;
 import ru.chertenok.filerepository.server.bd.BDHandler;
 import ru.chertenok.filerepository.server.config.ConfigServer;
@@ -115,17 +114,59 @@ public class ClientConnection extends Thread {
                 log.log(Level.SEVERE, "file list create error - " + e);
                 sendMessage(new MessageResult(false, "internal error"), out);
             }
+            return;
         }
         // ======================== get file ======================
         if (message instanceof MessageGetFile) {
             sendFile((MessageGetFile) message);
+            return;
         }
 
+        // ================= file delete ========================
+        if (message instanceof MessageFileDelete) {
+            deleteFile((MessageFileDelete) message);
+            return;
+        }
+
+
+        // =============== other ===============
+        sendMessage(new MessageResult(false, "command " + message.getClass().getSimpleName() + " not found"), out);
+    }
+
+    private void deleteFile(MessageFileDelete m) {
+        try {
+            if (BDHandler.isFileExistInBD(m.fileInfo.fileName, userLogin) && !BDHandler.isHashNotExistInBd(m.fileInfo.ID)) {
+
+                Path p = Paths.get(ConfigServer.getFileStorege() + m.fileInfo.ID + ConfigServer.FILE_EXT);
+                if (Files.exists(p)) {
+                    try {
+                        Files.delete(p);
+                        BDHandler.deleteFileFromBD(m.fileInfo.ID, userLogin);
+                        log.log(Level.INFO, "file deleted : " + m.fileInfo.fileName);
+                        sendMessage(new MessageResult(true, "file " + m.fileInfo.fileName + " deleted"), out);
+                    } catch (IOException e) {
+                        log.log(Level.SEVERE, "error deleting file from disk: " + e);
+                        sendMessage(new MessageResult(false, "internal error"), out);
+                    }
+                } else {
+                    BDHandler.deleteFileFromBD(m.fileInfo.ID, userLogin);
+                    log.log(Level.SEVERE, "error! file not found on disk and exist on bd! " + m.fileInfo.fileName);
+                    sendMessage(new MessageResult(true, "file " + m.fileInfo.fileName + " deleted from bd"), out);
+                }
+
+            } else {
+                log.log(Level.SEVERE, "error! file not found!" + m.fileInfo.fileName);
+                sendMessage(new MessageResult(false, "file " + m.fileInfo.fileName + " not found"), out);
+            }
+        } catch (SQLException e) {
+            log.log(Level.SEVERE, "error sql deleting file: " + e);
+            sendMessage(new MessageResult(false, "internal error"), out);
+        }
     }
 
     private void sendFile(MessageGetFile m) {
         try {
-            if (!BDHandler.checkFileExist(m.fileInfo.fileName, userLogin)) {
+            if (!BDHandler.isFileExistInBD(m.fileInfo.fileName, userLogin)) {
                 log.log(Level.SEVERE, "error checking file in bd: file not exist " + m.fileInfo.fileName + " user " + userLogin);
                 sendMessage(new MessageResult(false, "file " + m.fileInfo.fileName + " not exist"), out);
                 return;
@@ -135,7 +176,7 @@ public class ClientConnection extends Thread {
             sendMessage(new MessageResult(false, "internal error"), out);
         }
 
-        Path p = Paths.get(ConfigServer.getFileStorege() + m.fileInfo.ID + ".dat");
+        Path p = Paths.get(ConfigServer.getFileStorege() + m.fileInfo.ID + ConfigServer.FILE_EXT);
         if (!Files.exists(p)) {
             log.log(Level.SEVERE, "file " + p + " не существует");
             sendMessage(new MessageResult(false, "internal error file " + m.fileInfo.fileName + " not exist in repository"), out);
@@ -178,7 +219,7 @@ public class ClientConnection extends Thread {
             // если новый
             synchronized (BDHandler.class) {
                 try {
-                    if (BDHandler.checkName(m.userLogin)) {
+                    if (BDHandler.isUserNameExistInBD(m.userLogin)) {
                         BDHandler.registerUser(m.userLogin, m.userPassword);
                         isLoggIn = true;
                         userLogin = m.userLogin.trim();
@@ -197,7 +238,7 @@ public class ClientConnection extends Thread {
         // старый
         {
             try {
-                if (BDHandler.loginUser(m.userLogin, m.userPassword)) {
+                if (BDHandler.isUserNameAndPasswordTrue(m.userLogin, m.userPassword)) {
                     log.log(Level.INFO, "user " + m.userLogin + " login");
                     sendMessage(new MessageResult(true, "user " + m.userLogin + " login"), out);
                     isLoggIn = true;
@@ -217,59 +258,54 @@ public class ClientConnection extends Thread {
     private void loadFile(MessageFile message) {
         // принимаем
         MessageFile messageFile = message;
-        if (!checkBDFileExist(messageFile.fileInfo)) {
-            try {
-                try {
-                    messageFile.fileInfo.ID = BDHandler.getFileID(messageFile.fileInfo.SourceFileName, userLogin);
-                } catch (Exception e) {
-                    log.log(Level.SEVERE, "error get FileID: " + e);
-                    sendMessage(new MessageResult(false, "internal error"), out);
-                    return;
-                }
-                // существует ли путь
-                Path path_dir = Paths.get(ConfigServer.getFileStorege());
-                if (!Files.exists(path_dir)) Files.createDirectories(path_dir);
-
-                Path path = Paths.get(ConfigServer.getFileStorege() + messageFile.fileInfo.ID + ConfigServer.FILE_EXT);
-                if (Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
-                    log.log(Level.SEVERE, "file exist: " + path.toString());
-                    sendMessage(new MessageResult(false, "error. file exist?"), out);
-                    return;
-                } else {
-                    Files.write(path, messageFile.data);
-                    log.log(Level.SEVERE, "file received: " + messageFile.fileInfo.fileName + " saved as "
-                            + path.toString());
-                    try {
-                        BDHandler.addUserFileToBD(userLogin, message.fileInfo);
-                        sendMessage(new MessageResult(true, "file received " + messageFile.fileInfo.fileName), out);
-                    } catch (SQLException e) {
-                        // if error - delete file from disk
-                        log.log(Level.SEVERE, "error save file into bd: " + e);
-                        Files.delete(path);
-                        sendMessage(new MessageResult(false, "error file receiving " + messageFile.fileInfo.fileName), out);
-                    }
-
-                }
-            } catch (IOException e) {
-                log.log(Level.SEVERE, "error file receiving: " + e);
-                sendMessage(new MessageResult(false, "error file receiving " + messageFile.fileInfo.fileName), out);
-            }
-        } else {
-            log.log(Level.SEVERE, "file name exist in bd: " + message.fileInfo.fileName + " user - " + userLogin);
-            sendMessage(new MessageResult(false, "error. file exist."), out);
-        }
-    }
-
-    //todo глючит проверить и исправить
-    private boolean checkBDFileExist(FileInfo fi) {
-        boolean result = true;
         try {
-            result = !BDHandler.checkFileExist(fi.fileName, userLogin);
+            if (!BDHandler.isFileExistInBD(messageFile.fileInfo.fileName, userLogin)) {
+                try {
+                    try {
+                        messageFile.fileInfo.ID = BDHandler.getFileID(messageFile.fileInfo.SourceFileName, userLogin);
+                    } catch (Exception e) {
+                        log.log(Level.SEVERE, "error get FileID: " + e);
+                        sendMessage(new MessageResult(false, "internal error"), out);
+                        return;
+                    }
+                    // существует ли путь
+                    Path path_dir = Paths.get(ConfigServer.getFileStorege());
+                    if (!Files.exists(path_dir)) Files.createDirectories(path_dir);
+
+                    Path path = Paths.get(ConfigServer.getFileStorege() + messageFile.fileInfo.ID + ConfigServer.FILE_EXT);
+                    if (Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
+                        log.log(Level.SEVERE, "file exist: " + path.toString());
+                        sendMessage(new MessageResult(false, "error. file exist?"), out);
+                        return;
+                    } else {
+                        Files.write(path, messageFile.data);
+                        log.log(Level.SEVERE, "file received: " + messageFile.fileInfo.fileName + " saved as "
+                                + path.toString());
+                        try {
+                            BDHandler.addUserFileToBD(userLogin, message.fileInfo);
+                            sendMessage(new MessageResult(true, "file received " + messageFile.fileInfo.fileName), out);
+                        } catch (SQLException e) {
+                            // if error - delete file from disk
+                            log.log(Level.SEVERE, "error save file into bd: " + e);
+                            Files.delete(path);
+                            sendMessage(new MessageResult(false, "error file receiving " + messageFile.fileInfo.fileName), out);
+                        }
+
+                    }
+                } catch (IOException e) {
+                    log.log(Level.SEVERE, "error file receiving: " + e);
+                    sendMessage(new MessageResult(false, "error file receiving " + messageFile.fileInfo.fileName), out);
+                }
+            } else {
+                log.log(Level.SEVERE, "file name exist in bd: " + message.fileInfo.fileName + " user - " + userLogin);
+                sendMessage(new MessageResult(false, "error. file exist."), out);
+            }
         } catch (SQLException e) {
-            log.log(Level.SEVERE, "error in sql check file on bd: " + e);
+            log.log(Level.SEVERE, "error sql check file in bd :" + e);
+            sendMessage(new MessageResult(false, "internal error"), out);
         }
-        return result;
     }
+
 
     public void stopServer() {
         isStop = true;
