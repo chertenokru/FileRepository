@@ -6,7 +6,7 @@ import java.util.logging.Level;
 public class ConfigClient {
     private final static int WINDOW_WIDTH = 800;
     private final static int WINDOW_HEIGHT = 640;
-    private final static String DEFAULT_LOCAL_FILES_PATH = "LocalFiles/";
+    private final static String DEFAULT_LOCAL_FILES_PATH = "/LocalFiles";
 
     public static final String TITLE = "Repository Client";
     public static final String LOG_FILE_NAME = "log.txt";

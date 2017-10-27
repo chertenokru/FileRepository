@@ -42,6 +42,12 @@ public class FileInfo implements Serializable {
 
     @Override
     public String toString() {
-        return fileName;
+        return "FileInfo{" +
+                "fileName='" + fileName + '\'' +
+                ", SourceFileName='" + SourceFileName + '\'' +
+                ", fileDT='" + fileDT + '\'' +
+                ", fileSize=" + fileSize +
+                ", ID='" + ID + '\'' +
+                '}';
     }
 }

@@ -117,43 +117,8 @@ public class ClientConnection extends Thread {
                 sendMessage(new MessageResult(false,"internal error"),out);
             }
         }
-        // ======================== get file ======================
-        if (message instanceof MessageGetFile)
-        {
-            sendFile((MessageGetFile) message);
-        }
 
         }
-
-    private void sendFile(MessageGetFile m) {
-        try {
-            if (!BDHandler.checkFileExist(m.fileInfo.fileName,userLogin))
-            {
-                log.log(Level.SEVERE,"error checking file in bd: file not exist "+m.fileInfo.fileName+" user "+userLogin);
-                sendMessage(new MessageResult(false,"file "+m.fileInfo.fileName+" not exist"),out);
-                return;
-            }
-        } catch (SQLException e) {
-            log.log(Level.SEVERE,"error checking file in bd: "+e);
-            sendMessage(new MessageResult(false,"internal error"),out);
-        }
-
-        Path p = Paths.get(ConfigServer.getFileStorege()+m.fileInfo.ID+".dat");
-        if (!Files.exists(p))
-        {
-            log.log(Level.SEVERE,"file "+p+" не существует" );
-            sendMessage(new MessageResult(false,"internal error file "+m.fileInfo.fileName+" not exist in repository"),out);
-        } else
-        {
-            try {
-                sendMessage(new MessageResultFile(m.fileInfo,Files.readAllBytes(p)),out);
-                log.log(Level.INFO,"file sended "+m.fileInfo.fileName);
-            } catch (IOException e) {
-                log.log(Level.SEVERE,"error sending file "+m.fileInfo.fileName);
-                sendMessage(new MessageResult(false,"internal error reading file "+m.fileInfo.fileName+""),out);
-            }
-        }
-    }
 
     private void login(MessageLogin message) {
         MessageLogin m = message;
@@ -185,7 +150,7 @@ public class ClientConnection extends Thread {
             // если новый
             synchronized (BDHandler.class) {
                 try {
-                    if (BDHandler.checkName(m.userLogin)) {
+                    if (BDHandler.isUserNameExistInBD(m.userLogin)) {
                         BDHandler.registerUser(m.userLogin, m.userPassword);
                         isLoggIn = true;
                         userLogin = m.userLogin.trim();
@@ -205,7 +170,7 @@ public class ClientConnection extends Thread {
             // старый
             {
                 try {
-                    if (BDHandler.loginUser(m.userLogin, m.userPassword))
+                    if (BDHandler.isUserNameAndPasswordTrue(m.userLogin, m.userPassword))
                     {
                         log.log(Level.INFO,"user " + m.userLogin + " login");
                         sendMessage(new MessageResult(true, "user " + m.userLogin + " login"), out);

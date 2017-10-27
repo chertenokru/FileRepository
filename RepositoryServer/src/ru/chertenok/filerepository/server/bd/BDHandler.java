@@ -31,14 +31,13 @@ public class BDHandler {
 
     public static void close() throws SQLException {
         connection.close();
-
     }
 
     public static String getFileID(String fullFileName, String userLogin) throws Exception {
         String result = getHashCode(fullFileName + userLogin, Utils.HashCode.SH256);
-        if (!checkHashInBd(result)) {
+        if (!isHashNotExistInBd(result)) {
             result = getHashCode(fullFileName + userLogin + System.currentTimeMillis(), Utils.HashCode.SH256);
-            if (checkHashInBd(result)) {
+            if (isHashNotExistInBd(result)) {
                 log.log(Level.SEVERE, "HashID is dublicate: hash - " + result + " , file  - " + fullFileName + ", user " + userLogin);
                 throw new Exception("HashID is dublicate");
             }
@@ -46,27 +45,8 @@ public class BDHandler {
         return result;
     }
 
-    private static boolean checkHashInBd(String hash) {
-        boolean result = true;
-        PreparedStatement st = null;
-        try {
-            st = connection.prepareStatement("select count(*) from repository where Hash = ?");
-            st.setString(1, hash);
-
-            ResultSet rs = st.executeQuery();
-            if (rs != null) {
-                if (rs.getInt(1) == 0) {
-                    result = false;
-                }
-                rs.close();
-            }
-            st.close();
-        } catch (SQLException e) {
-            log.log(Level.SEVERE, "check hash - sql error: " + e);
-        } finally {
-            return result;
-        }
-
+    private static boolean isHashNotExistInBd(String hash) throws SQLException {
+        return getFirstIntFromSelect("select count(*) from repository where Hash = ?", hash) == 0;
     }
 
     public static void registerUser(String userName, String userPassword) throws SQLException {
@@ -76,26 +56,11 @@ public class BDHandler {
         st.execute();
         st.close();
         connection.commit();
-
-
     }
 
-    public static boolean loginUser(String userName, String userPassword) throws Exception {
-        boolean result = false;
-        log.log(Level.INFO, "login userName = " + userName);
-        PreparedStatement st = connection.prepareStatement("select count(*) from users where login = ? and password = ?");
-        st.setString(1, userName.trim());
-        st.setString(2, getHashCode(userPassword.trim(), Utils.HashCode.SH256));
-        ResultSet rs = st.executeQuery();
-        if (rs != null) {
-            if (rs.getInt(1) != 0) {
-                result = true;
-            }
-            rs.close();
-        }
-        st.close();
-        return result;
-
+    public static boolean isUserNameAndPasswordTrue(String userName, String userPassword) throws Exception {
+        return getFirstIntFromSelect("select count(*) from users where login = ? and password = ?",
+                userName.trim(), getHashCode(userPassword.trim(), Utils.HashCode.SH256)) != 0;
     }
 
     public static void addUserFileToBD(String userName, FileInfo fi) throws SQLException {
@@ -114,38 +79,29 @@ public class BDHandler {
     }
 
 
-    public static boolean checkName(String userLogin) throws SQLException {
-        boolean result = false;
-        log.log(Level.INFO, "check userName = " + userLogin);
-        PreparedStatement st = connection.prepareStatement("select count(*) from users where login = ?");
-        st.setString(1, userLogin.trim());
-        ResultSet rs = st.executeQuery();
-        if (rs != null) {
-            if (rs.getInt(1) == 0) {
-                result = true;
-            }
-            rs.close();
-        }
-        st.close();
-        return result;
+    public static boolean isUserNameExistInBD(String userLogin) throws SQLException {
+        return getFirstIntFromSelect("select count(*) from users where login = ?", userLogin.trim()) == 0;
     }
 
-    public static boolean checkFileExist(String file,String userLogin) throws SQLException {
-        boolean result = false;
-        log.log(Level.INFO, "check file exist for user = " + userLogin+" file - "+file );
-        PreparedStatement st = connection.prepareStatement("select count(*) from repository where UserLogin = ? and UserFileName = ?");
-        st.setString(1, userLogin);
-        st.setString(1, file);
-        ResultSet rs = st.executeQuery();
-        if (rs != null) {
-            if (rs.getInt(1) == 0) {
-                result = true;
-            }
-            rs.close();
+
+    private static String getFirstStringFromSelect(String sql, String... params) throws SQLException, IllegalArgumentException {
+        PreparedStatement st = connection.prepareStatement(sql);
+        if (st.getParameterMetaData().getParameterCount() != params.length)
+            throw new IllegalArgumentException("params count != sql params count ");
+        for (int i = 0; i < st.getParameterMetaData().getParameterCount(); i++) {
+            st.setString(i + 1, params[i]);
         }
+        ResultSet rs = st.executeQuery();
+        String res = rs.getString(1);
+        rs.close();
         st.close();
-        return result;
+        return res;
     }
+
+    private static int getFirstIntFromSelect(String sql, String... params) throws SQLException, IllegalArgumentException {
+        return Integer.valueOf(getFirstStringFromSelect(sql, params));
+    }
+
 
     public static FileInfo[] getFileList(String userLogin) throws SQLException, IOException {
         log.log(Level.INFO, "select files from bd to user [" + userLogin + "] ");
@@ -165,7 +121,7 @@ public class BDHandler {
         }
         st.close();
         FileInfo[] res = new FileInfo[list.size()];
-        return  list.toArray(res);
+        return list.toArray(res);
     }
 
 
