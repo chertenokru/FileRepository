@@ -3,6 +3,7 @@ package ru.chertenok.filerepository.client;
 
 import ru.chertenok.filerepository.client.config.ConfigClient;
 import ru.chertenok.filerepository.client.utils.SwingUtils;
+import ru.chertenok.filerepository.common.FileInfo;
 import ru.chertenok.filerepository.common.config.ConfigCommon;
 
 import javax.swing.*;
@@ -35,6 +36,8 @@ public class Main extends JFrame {
     private JButton bDelete;
     private JButton bDownload;
     private JButton bUpload;
+    private JList<FileInfo> fileList;
+    private DefaultListModel<FileInfo> listModel;
 
     public static void main(String[] args) {
         new Main();
@@ -197,7 +200,7 @@ public class Main extends JFrame {
                 else
                 {
                     lMessage.setText(client.register(tfLogin.getText(), String.copyValueOf(pfPassword.getPassword()),cbNewUser.isSelected()));
-                    if (client.isLoggIn()) client.getFileList();
+                    if (client.isLoggIn()) updateFileList();
 
                 }
 
@@ -223,7 +226,7 @@ public class Main extends JFrame {
                 if (fc.showOpenDialog(Main.this) == JFileChooser.APPROVE_OPTION)
                 {
                     lMessage.setText(client.uploadFile(fc.getSelectedFile().toString()));
-
+                    updateFileList();
                 }
             }
         });
@@ -237,6 +240,16 @@ public class Main extends JFrame {
         updateStatus();
         pRoot.add(pUsersOperation, constr);
     }
+
+    private void updateFileList(){
+      FileInfo[] fl = client.getFileList();
+      listModel.clear();
+      for(FileInfo f:fl){
+            listModel.addElement(f);
+        }
+
+    }
+
 
     private void updateStatus() {
         if (client.isConnected()) {
@@ -259,6 +272,7 @@ public class Main extends JFrame {
             cbNewUser.setEnabled(false);
             bDelete.setEnabled(false);
             bDownload.setEnabled(false);
+            listModel.clear();
         }
         if (client.isLoggIn() && client.isConnected()){
             statusLogin.setBackground(Color.GREEN);
@@ -276,7 +290,7 @@ public class Main extends JFrame {
             bLogin.setText("Log In");
             bDelete.setEnabled(false);
             bDownload.setEnabled(false);
-
+            listModel.clear();
         }
     }
 
@@ -289,17 +303,28 @@ public class Main extends JFrame {
         bDelete = new JButton("Delete file");
         p.add(bDelete,BorderLayout.EAST);
         bDownload = new JButton("Download file");
+        bDownload.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                if (fileList.isSelectionEmpty()) return;
+                lMessage.setText(client.getFile(listModel.elementAt(fileList.getSelectedIndex()),true));
+            }
+        });
         p.add(bDownload,BorderLayout.WEST);
         pServer.add(p,BorderLayout.NORTH);
+
+        listModel = new DefaultListModel<>();
+        fileList =  new JList<>();
+        fileList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        fileList.setLayoutOrientation(JList.VERTICAL);
+        fileList.setModel(listModel);
+
+        JScrollPane listScroll = new JScrollPane(fileList);
+        listScroll.setPreferredSize(new Dimension(400,600));
+        pServer.add(listScroll,BorderLayout.CENTER);
 
         pRoot.add(pServer, constr);
     }
 
-    private void createLocalPanel(GridBagConstraints constr) {
-        JPanel pLocal = new JPanel();
-        pLocal.setBorder(SwingUtils.getBorderWithTitle("|  Local storage  |"));
-        pLocal.setPreferredSize(new Dimension(300, 600));
-        pRoot.add(pLocal, constr);
-    }
 
 }

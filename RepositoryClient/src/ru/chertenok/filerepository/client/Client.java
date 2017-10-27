@@ -1,5 +1,6 @@
 package ru.chertenok.filerepository.client;
 
+import ru.chertenok.filerepository.client.config.ConfigClient;
 import ru.chertenok.filerepository.common.FileInfo;
 import ru.chertenok.filerepository.common.config.ConfigCommon;
 import ru.chertenok.filerepository.common.messages.*;
@@ -8,6 +9,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -131,10 +135,10 @@ public class Client {
         if (isLoggIn) {
             if (sendMessage(new MessageGetList(), out)) {
                 Message m = readMessage(in);
-                if (m instanceof MessageFileList){
+                if (m instanceof MessageFileList) {
                     return ((MessageFileList) m).fileInfos;
                 } else processMessage(m);
-            }else {
+            } else {
                 disconnect();
                 return new FileInfo[0];
             }
@@ -166,7 +170,51 @@ public class Client {
         } else {
             disconnect();
         }
-
-
     }
+
+
+    public String getFile(FileInfo f, boolean replace) {
+        if (sendMessage(new MessageGetFile(f), out)) {
+            Message m = readMessage(in);
+            if (m instanceof MessageResultFile) {
+                MessageResultFile rf = (MessageResultFile) m;
+                Path p_dir = Paths.get(ConfigClient.getLocalFilesPath());
+                if (!Files.exists(p_dir)) try {
+                    Files.createDirectories(p_dir);
+                } catch (IOException e) {
+                    log.log(Level.SEVERE, "error creating destionation directory: " + e);
+                    return "error creating destionation directory: " + e;
+                }
+                Path p = Paths.get(ConfigClient.getLocalFilesPath() + rf.fileInfo.fileName);
+                if (Files.exists(p)) {
+                    if (replace) try {
+                        Files.delete(p);
+                    } catch (IOException e) {
+                        log.log(Level.SEVERE, "error deleting file " + p + ": " + e);
+                        return "error deleting file " + p + ": " + e;
+                    }
+                    else {
+                        log.log(Level.SEVERE, "file exist: " + p);
+                        return "file exist " + p;
+                    }
+                }
+                try {
+                    Files.write(p, rf.data);
+                    log.log(Level.INFO, "download and saved file: " + p);
+                    return "download and saved file: " + p;
+                } catch (IOException e) {
+                    log.log(Level.SEVERE, "Error saving file: " + e);
+                    return "Error saving file: " + e;
+                }
+            } else {
+                processMessage(m);
+                return "server not return result";
+            }
+        } else {
+            disconnect();
+            return "connection lost ...";
+        }
+    }
+
+
 }
