@@ -128,6 +128,23 @@ public class BDHandler {
         return result;
     }
 
+    public static boolean checkFileExist(String file,String userLogin) throws SQLException {
+        boolean result = false;
+        log.log(Level.INFO, "check file exist for user = " + userLogin+" file - "+file );
+        PreparedStatement st = connection.prepareStatement("select count(*) from repository where UserLogin = ? and UserFileName = ?");
+        st.setString(1, userLogin);
+        st.setString(1, file);
+        ResultSet rs = st.executeQuery();
+        if (rs != null) {
+            if (rs.getInt(1) == 0) {
+                result = true;
+            }
+            rs.close();
+        }
+        st.close();
+        return result;
+    }
+
     public static FileInfo[] getFileList(String userLogin) throws SQLException, IOException {
         log.log(Level.INFO, "select files from bd to user [" + userLogin + "] ");
         PreparedStatement st = connection.prepareStatement("select Hash,UserFileName,userFullName,dt, Size from repository where UserLogin = ?");

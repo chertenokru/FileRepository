@@ -246,7 +246,6 @@ public class Main extends JFrame {
       listModel.clear();
       for(FileInfo f:fl){
             listModel.addElement(f);
-          System.out.println(f);
         }
 
     }
@@ -273,6 +272,7 @@ public class Main extends JFrame {
             cbNewUser.setEnabled(false);
             bDelete.setEnabled(false);
             bDownload.setEnabled(false);
+            listModel.clear();
         }
         if (client.isLoggIn() && client.isConnected()){
             statusLogin.setBackground(Color.GREEN);
@@ -290,7 +290,7 @@ public class Main extends JFrame {
             bLogin.setText("Log In");
             bDelete.setEnabled(false);
             bDownload.setEnabled(false);
-
+            listModel.clear();
         }
     }
 
@@ -303,6 +303,13 @@ public class Main extends JFrame {
         bDelete = new JButton("Delete file");
         p.add(bDelete,BorderLayout.EAST);
         bDownload = new JButton("Download file");
+        bDownload.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                if (fileList.isSelectionEmpty()) return;
+                lMessage.setText(client.getFile(listModel.elementAt(fileList.getSelectedIndex()),true));
+            }
+        });
         p.add(bDownload,BorderLayout.WEST);
         pServer.add(p,BorderLayout.NORTH);
 
