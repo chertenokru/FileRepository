@@ -51,11 +51,9 @@ public class BDHandler {
     }
 
     public static void registerUser(String userName, String userPassword) throws SQLException {
-        PreparedStatement st = connection.prepareStatement("insert INTO users (login,password) VALUES (?,?)");
-        st.setString(1, userName.trim());
-        st.setString(2, getHashCode(userPassword.trim(), Utils.HashCode.SH256));
-        st.execute();
-        st.close();
+        executeQueryWithNoResult("insert INTO users (login,password) VALUES (?,?)",
+                userName.trim(), getHashCode(userPassword.trim(), Utils.HashCode.SH256));
+        log.log(Level.INFO, "registered user [" + userName + "] inserted in bd");
     }
 
     public static boolean isUserNameAndPasswordTrue(String userName, String userPassword) throws Exception {
@@ -64,16 +62,8 @@ public class BDHandler {
     }
 
     public static void addUserFileToBD(String userName, FileInfo fi) throws SQLException {
-        PreparedStatement st = connection.prepareStatement(
-                "insert INTO repository (Hash,UserLogin,UserFileName,userFullName,Size,dt) VALUES (?,?,?,?,?,?)");
-        st.setString(1, fi.ID);
-        st.setString(2, userName);
-        st.setString(3, fi.fileName);
-        st.setString(4, fi.SourceFileName);
-        st.setString(5, String.valueOf(fi.fileSize));
-        st.setString(6, fi.fileDT);
-        st.execute();
-        st.close();
+        executeQueryWithNoResult("insert INTO repository (Hash,UserLogin,UserFileName,userFullName,Size,dt) VALUES (?,?,?,?,?,?)",
+                fi.ID, userName, fi.fileName, fi.SourceFileName, String.valueOf(fi.fileSize), fi.fileDT);
         log.log(Level.INFO, "file [" + fi.fileName + "] inserted in bd");
     }
 
