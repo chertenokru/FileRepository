@@ -199,7 +199,7 @@ public class Main extends JFrame {
                 }
                 else
                 {
-                    lMessage.setText(client.register(tfLogin.getText(), String.copyValueOf(pfPassword.getPassword()),cbNewUser.isSelected()));
+                    showMessage(client.register(tfLogin.getText(), String.copyValueOf(pfPassword.getPassword()),cbNewUser.isSelected()));
                     if (client.isLoggIn()) updateFileList();
 
                 }
@@ -225,7 +225,7 @@ public class Main extends JFrame {
                 JFileChooser fc = new JFileChooser("Выберите файл для отправки на сервер");
                 if (fc.showOpenDialog(Main.this) == JFileChooser.APPROVE_OPTION)
                 {
-                    lMessage.setText(client.uploadFile(fc.getSelectedFile().toString()));
+                    showMessage(client.uploadFile(fc.getSelectedFile().toString()));
                     updateFileList();
                 }
             }
@@ -239,6 +239,11 @@ public class Main extends JFrame {
         constr.anchor = GridBagConstraints.NORTH;
         updateStatus();
         pRoot.add(pUsersOperation, constr);
+    }
+
+    private void showMessage(String message) {
+        lMessage.setText(message);
+        JOptionPane.showMessageDialog(this,message,"Information",JOptionPane.CLOSED_OPTION);
     }
 
     private void updateFileList(){
@@ -301,13 +306,20 @@ public class Main extends JFrame {
         JPanel p = new JPanel(new BorderLayout());
         p.add(new JLabel("Select file and Click the button to download/delete file from server"),BorderLayout.NORTH);
         bDelete = new JButton("Delete file");
+        bDelete.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                if (fileList.isSelectionEmpty()) return;
+                showMessage(client.deleteFile(listModel.elementAt(fileList.getSelectedIndex())));
+            }
+        });
         p.add(bDelete,BorderLayout.EAST);
         bDownload = new JButton("Download file");
         bDownload.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 if (fileList.isSelectionEmpty()) return;
-                lMessage.setText(client.getFile(listModel.elementAt(fileList.getSelectedIndex()),true));
+                showMessage(client.getFile(listModel.elementAt(fileList.getSelectedIndex()),true));
             }
         });
         p.add(bDownload,BorderLayout.WEST);

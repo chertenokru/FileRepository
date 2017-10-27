@@ -91,20 +91,8 @@ public class Client {
             log.log(Level.SEVERE, "не удалось отправить файл: " + e);
             return "не удалось отправить файл: " + e;
         }
-        if (sendMessage(m, out)) {
-            Message mes = readMessage(in);
-            if (mes instanceof MessageResult) {
-                return ((MessageResult) mes).message;
-            } else {
-                processMessage(m);
-                return "server not return result";
-            }
-        } else {
-            disconnect();
-            return "connection lost ...";
-        }
-
-
+        sendMessage(m, out);
+        return processMessage(readMessage(in));
     }
 
     public String register(String login, String password, boolean newUser) {
@@ -121,10 +109,10 @@ public class Client {
                     return mr.message;
                 }
             } else {
-                processMessage(m);
-                return "server not return result";
-            }
-        } else {
+                return processMessage(m);
+
+            }}
+        else {
             disconnect();
             return "connection lost ...";
         }
@@ -146,22 +134,24 @@ public class Client {
         return null;
     }
 
-    private void processMessage(Message message) {
-        if (message == null) return;
+    private String processMessage(Message message) {
+        if (message == null) return "";
 
         if (message instanceof MessageClose) {
             log.log(Level.INFO, "server closed session ");
             disconnect();
-            return;
+            return "server closed session ";
         }
-
-        if (message instanceof MessageFileList) {
-            for (FileInfo fi : ((MessageFileList) message).fileInfos) {
-                log.log(Level.INFO, fi.toString());
+        if (message instanceof MessageResult) {
+            MessageResult m = (MessageResult) message;
+            if (m.success) {
+                return "Ok. " + m.message;
+            } else {
+                return "Error. " + m.message;
             }
         }
 
-
+        return "";
     }
 
     public void logOut() {
@@ -208,7 +198,7 @@ public class Client {
                 }
             } else {
                 processMessage(m);
-                return "server not return result";
+                return processMessage(m);
             }
         } else {
             disconnect();
@@ -217,4 +207,9 @@ public class Client {
     }
 
 
+    public String deleteFile(FileInfo fileInfo) {
+        sendMessage(new MessageFileDelete(fileInfo),out);
+            return processMessage(readMessage(in));
+
+    }
 }
