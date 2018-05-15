@@ -8,14 +8,16 @@
         <outputRelativeToContentRoot value="true" />
         <module name="Common" />
         <module name="RepositoryClient" />
+        <module name="RepositoryClient2" />
         <module name="RepositoryServer" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="Common" target="1.8" />
       <module name="FileRepository" target="1.8" />
-      <module name="RepositoryClient" target="1.5" />
-      <module name="RepositoryServer" target="7" />
+      <module name="RepositoryClient" target="1.8" />
+      <module name="RepositoryClient2" target="1.8" />
+      <module name="RepositoryServer" target="8" />
     </bytecodeTargetLevel>
   </component>
 </project>

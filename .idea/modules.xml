@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/Common/Common.iml" filepath="$PROJECT_DIR$/Common/Common.iml" />
       <module fileurl="file://$PROJECT_DIR$/FileRepository.iml" filepath="$PROJECT_DIR$/FileRepository.iml" />
       <module fileurl="file://$PROJECT_DIR$/RepositoryClient/RepositoryClient.iml" filepath="$PROJECT_DIR$/RepositoryClient/RepositoryClient.iml" />
+      <module fileurl="file://$PROJECT_DIR$/RepositoryClient2/RepositoryClient2.iml" filepath="$PROJECT_DIR$/RepositoryClient2/RepositoryClient2.iml" />
       <module fileurl="file://$PROJECT_DIR$/RepositoryServer/RepositoryServer.iml" filepath="$PROJECT_DIR$/RepositoryServer/RepositoryServer.iml" />
     </modules>
   </component>

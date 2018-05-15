@@ -4,6 +4,7 @@ package ru.chertenok.filerepository.client;
 import ru.chertenok.filerepository.client.config.ConfigClient;
 import ru.chertenok.filerepository.client.utils.SwingUtils;
 import ru.chertenok.filerepository.common.FileInfo;
+import ru.chertenok.filerepository.common.client.Client;
 import ru.chertenok.filerepository.common.config.ConfigCommon;
 
 import javax.swing.*;

@@ -1,6 +1,5 @@
-package ru.chertenok.filerepository.client;
+package ru.chertenok.filerepository.common.client;
 
-import ru.chertenok.filerepository.client.config.ConfigClient;
 import ru.chertenok.filerepository.common.FileInfo;
 import ru.chertenok.filerepository.common.config.ConfigCommon;
 import ru.chertenok.filerepository.common.messages.*;
