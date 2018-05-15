@@ -8,8 +8,17 @@
     <artifactId>FileRepository</artifactId>
     <packaging>pom</packaging>
     <version>2.0</version>
+    <properties>
+        <!-- настройки проекта -->
+        <jdk.version>1.8</jdk.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+    </properties>
+
     <modules>
         <module>Common</module>
+        <module>RepositoryClient</module>
+        <module>RepositoryServer</module>
     </modules>
 
 </project>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="Common" />
+        <module name="RepositoryClient" />
+        <module name="RepositoryServer" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="Common" target="1.8" />
+      <module name="FileRepository" target="1.8" />
+      <module name="RepositoryClient" target="1.5" />
+      <module name="RepositoryServer" target="7" />
+    </bytecodeTargetLevel>
+  </component>
+</project>
