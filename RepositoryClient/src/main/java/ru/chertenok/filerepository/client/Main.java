@@ -1,6 +1,7 @@
 package ru.chertenok.filerepository.client;
 
 
+import com.sun.deploy.config.ClientConfig;
 import ru.chertenok.filerepository.client.config.ConfigClient;
 import ru.chertenok.filerepository.client.utils.SwingUtils;
 import ru.chertenok.filerepository.common.FileInfo;
@@ -48,6 +49,7 @@ public class Main extends JFrame {
         super(ConfigClient.TITLE);
         configLogger();
         client = new Client();
+        client.setLocalFilesPath(ClientConfig.getLocalStorageDir());
         configWindow();
     }
 
