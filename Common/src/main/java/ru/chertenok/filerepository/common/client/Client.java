@@ -18,12 +18,13 @@ import static ru.chertenok.filerepository.common.utils.MessageUtils.readMessage;
 import static ru.chertenok.filerepository.common.utils.MessageUtils.sendMessage;
 
 public class Client {
-    private Logger log = Logger.getGlobal();
+    private final Logger log = Logger.getGlobal();
     private Socket server;
     private ObjectInputStream in;
     private ObjectOutputStream out;
     private boolean isLoggIn;
     private boolean isConnected;
+    private String localFilesPath = "/";
 
     public Client() {
         connect();
@@ -31,6 +32,14 @@ public class Client {
 
     public boolean isLoggIn() {
         return isLoggIn;
+    }
+
+    public String getLocalFilesPath() {
+        return localFilesPath;
+    }
+
+    public void setLocalFilesPath(String localFilesPath) {
+        this.localFilesPath = localFilesPath;
     }
 
     public boolean isConnected() {
@@ -167,14 +176,14 @@ public class Client {
             Message m = readMessage(in);
             if (m instanceof MessageResultFile) {
                 MessageResultFile rf = (MessageResultFile) m;
-                Path p_dir = Paths.get(ConfigClient.getLocalFilesPath());
+                Path p_dir = Paths.get(localFilesPath);
                 if (!Files.exists(p_dir)) try {
                     Files.createDirectories(p_dir);
                 } catch (IOException e) {
                     log.log(Level.SEVERE, "error creating destionation directory: " + e);
                     return "error creating destionation directory: " + e;
                 }
-                Path p = Paths.get(ConfigClient.getLocalFilesPath() + rf.fileInfo.fileName);
+                Path p = Paths.get(localFilesPath + rf.fileInfo.fileName);
                 if (Files.exists(p)) {
                     if (replace) try {
                         Files.delete(p);
